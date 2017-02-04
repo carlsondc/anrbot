@@ -52,16 +52,16 @@ def tagToMarkdown(tag, cards):
     if not results:
         return "I couldn't find [[%s]]. I'm really sorry. "%(tag,)
     if len(results) > 1:
-        rv = "I found several matches for [[%s]]!"%(tag,)
+        rv = "I found several matches for [[%s]]!\n\n"%(tag,)
     else:
         rv = ""
     return rv + '\n\n'.join(results)
 
 def parseText(text):
-    rv =""
+    results = []
     for tag in iterCards(text):
-        rv += tagToMarkdown(tag, cards)
-    return rv
+        results.append(tagToMarkdown(tag, cards))
+    return '\n\n'.join(results)
 
 def parseComment(comment):
     print "COMMENT", comment.created
@@ -99,6 +99,6 @@ cards = loadCards('cards.json')
 
 # submissions = [post for post in s.submissions()]
 # comments = [comment for comment in s.comments(limit=None)]
-parsePosts(s.submissions(), 0, 'anrbot')
+#parsePosts(s.submissions(), 0, 'anrbot')
 parseComments(s.comments(), 0, 'anrbot')
 
