@@ -138,6 +138,7 @@ class ANRBot(object):
             return comment.created
         else:
             print "COMMENT IGNORE", comment.created
+            return comment.created
     
 
     def parseComments(self, stopTime):
@@ -172,6 +173,7 @@ class ANRBot(object):
             return post.created
         else:
             print "POST IGNORE", post.created
+            return post.created
 
    
 
@@ -213,7 +215,7 @@ if __name__ == '__main__':
     lastPost = getLast('lastPost')
     lastComment  = getLast('lastComment')
 
-    bot = ANRBot('cards.json', 'anrbot', 'anrbot')
+    bot = ANRBot('cards.json', 'anrbot', 'netrunner')
     lastPost = max(lastPost, bot.parsePosts(lastPost))
     lastComment = max(lastComment, bot.parseComments(lastComment))
     
