@@ -12,7 +12,6 @@ import time
 NRDB_SYNCH_INTERVAL=60*60*24
 NRDB_ALL_CARDS="https://netrunnerdb.com/api/2.0/public/cards"
 
-
 FOOTER = """
 
 *****
@@ -131,11 +130,14 @@ class ANRBot(object):
 
     def parseComment(self, comment):
         """Check comment text for tags and reply if any are found."""
-        print "COMMENT", comment.created
         replyText = self.parseText(comment.body)
         if replyText:
-            return self.rateLimitedReply(comment.reply,
+            print "COMMENT REPLY", comment.created
+            self.rateLimitedReply(comment.reply,
                 replyText+FOOTER)
+            return comment.created
+        else:
+            print "COMMENT IGNORE", comment.created
     
 
     def parseComments(self, stopTime):
@@ -145,24 +147,32 @@ class ANRBot(object):
            Return the server timestamp of the last reply made, or None
            if no replies were made."""
         lastReply = None
+        print "COMMENTS START", stopTime
         for comment in self.s.comments():
             if  comment.created <= stopTime:
+                print "COMMENTS END", comment.created, stopTime, "last", lastReply
                 return lastReply
             else:
                 if comment.author.name == self.botName:
-                    #maybe not necessary.
+                    # better safe than sorry
                     pass
                 else:
-                    lastReply = self.parseComment(comment)
+                    lastReply = max(lastReply,
+                        self.parseComment(comment))
+        print "COMMENTS END (no comments left)", stopTime, "last", lastReply
         return lastReply
    
 
     def parsePost(self, post):
         """Check submission text for tags and reply if any are found."""
-        print "POST", post.created
         replyText = self.parseText(post.selftext)
         if replyText:
-            return self.rateLimitedReply(post.reply, replyText + FOOTER)
+            print "POST REPLY", post.created
+            self.rateLimitedReply(post.reply, replyText + FOOTER)
+            return post.created
+        else:
+            print "POST IGNORE", post.created
+
    
 
     def parsePosts(self, stopTime):
@@ -172,32 +182,40 @@ class ANRBot(object):
            Return the server timestamp of the last reply made, or None
            if no replies were made."""
         lastReply = None
-        for post in self.s.submissions(start=stopTime):
+        print "POSTS START", stopTime
+        for post in self.s.submissions():
             if post.created <= stopTime:
-                #probably not necessary
-                break
+                # print "POST SKIP", post.created, stopTime
+                print "POSTS END", post.created, stopTime, "last", lastReply
+                return lastReply
             else:
                 if post.author.name == self.botName:
-                    #probably not necessary
+                    # better safe than sorry
                     pass
                 else:
-                    lastReply = self.parsePost(post)
+                    lastReply = max(lastReply, self.parsePost(post))
+        print "POSTS END (no posts left)", stopTime, "last", lastReply
         return lastReply
 
-
-
-if __name__ == '__main__':
-    if os.path.isfile('lastReply'):
-        with open('lastReply', 'r') as f:
-            lastReply = float(f.readline().strip())
+def getLast(fn):
+    if os.path.isfile(fn):
+        with open(fn, 'r') as f:
+            return float(f.readline().strip())
     else:
-        print >>sys.stderr, "lastReply file missing."
+        print >>sys.stderr, "file missing:", fn
         sys.exit(1)
 
+def writeLast(fn, timestamp):
+    with open(fn, 'w') as f:
+        f.write(str(timestamp))
+
+if __name__ == '__main__':
+    lastPost = getLast('lastPost')
+    lastComment  = getLast('lastComment')
+
     bot = ANRBot('cards.json', 'anrbot', 'anrbot')
-    lastPostReply = bot.parsePosts(lastReply)
-    lastCommentReply = bot.parseComments(lastReply)
-    lastReply = max(lastReply, lastPostReply, lastCommentReply)
+    lastPost = max(lastPost, bot.parsePosts(lastPost))
+    lastComment = max(lastComment, bot.parseComments(lastComment))
     
-    with open('lastReply', 'w') as f:
-        f.write(str(lastReply))
+    writeLast('lastPost', lastPost)
+    writeLast('lastComment', lastComment)
