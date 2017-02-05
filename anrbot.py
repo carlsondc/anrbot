@@ -112,10 +112,10 @@ class ANRBot(object):
         if not results:
             return "I couldn't find [[%s]]. I'm really sorry. "%(tag,)
         if len(results) > 1:
-            rv = "I found several matches for [[%s]]!\n\n"%(tag,)
+            return "I found several matches for [[%s]]!\n\n * %s"%(tag,
+                  '\n\n * '.join(results))
         else:
-            rv = ""
-        return rv + '\n\n'.join(results)
+            return results[0]
    
 
     def parseText(self, text):
@@ -216,6 +216,7 @@ if __name__ == '__main__':
     lastComment  = getLast('lastComment')
 
     bot = ANRBot('cards.json', 'anrbot', 'netrunner')
+    print "STARTING", time.time()
     lastPost = max(lastPost, bot.parsePosts(lastPost))
     lastComment = max(lastComment, bot.parseComments(lastComment))
     
