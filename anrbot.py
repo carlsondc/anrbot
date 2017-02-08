@@ -95,7 +95,7 @@ class ANRBot(object):
            name and a link to the relevant page in NRDB.
         """
         (title, code) = (card['title'], card['code'])
-        return '%s - [NetrunnerDB](http://netrunnerdb.com/en/card/%s)'%(title, code)
+        return '[%s](https://netrunnerdb.com/card_image/%s.png) - [NetrunnerDB](https://netrunnerdb.com/en/card/%s)'%(title, code, code)
 
 
     def tagToMarkdown(self, tag, cards):
