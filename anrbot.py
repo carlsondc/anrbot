@@ -15,7 +15,10 @@ NRDB_ALL_CARDS="https://netrunnerdb.com/api/2.0/public/cards"
 FOOTER = """
 
 *****
-I am Clanky, the ANRBot. [Source](https://github.com/carlsondc/anrbot)
+I am Clanky, the ANRBot. 
+
+[ [Contact] ](https://www.reddit.com/message/compose/?to=just_doug&subject=ANRBot)
+[ [Source] ](https://github.com/carlsondc/anrbot)
 """
 
 class ANRBot(object):
@@ -212,11 +215,14 @@ def writeLast(fn, timestamp):
         f.write(str(timestamp))
 
 if __name__ == '__main__':
+    if len(sys.argv) < 2:
+        sys.exit("Usage: %s subreddit"%(sys.argv[0],))
+    subreddit = sys.argv[1]
     lastPost = getLast('lastPost')
     lastComment  = getLast('lastComment')
 
-    bot = ANRBot('cards.json', 'anrbot', 'netrunner')
-    print "STARTING", time.time()
+    bot = ANRBot('cards.json', 'anrbot', subreddit)
+    print "STARTING %s %f"%(subreddit, time.time())
     lastPost = max(lastPost, bot.parsePosts(lastPost))
     lastComment = max(lastComment, bot.parseComments(lastComment))
     

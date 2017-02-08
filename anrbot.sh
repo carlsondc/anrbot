@@ -5,4 +5,4 @@
 # script exists. 
 
 cd $(dirname $0)
-./anrbot.py
+./anrbot.py $1
