@@ -11,6 +11,7 @@ import time
 
 NRDB_SYNCH_INTERVAL=60*60*24
 NRDB_ALL_CARDS="https://netrunnerdb.com/api/2.0/public/cards"
+RESULTS_LIMIT=10
 
 FOOTER = """
 
@@ -59,7 +60,10 @@ class ANRBot(object):
     def normalizeTitle(self, title):
         """Convert a string into the lower-case version of its 
            closest ascii equivalent"""
-        return unidecode(title).lower()
+        rv = ''.join(c for c in unidecode(title).lower() if c.isalnum())
+        if rv and rv[-1] == 's':
+            rv = rv[:-1]
+        return rv
 
 
     def loadCards(self, fn):
@@ -114,11 +118,15 @@ class ANRBot(object):
     
         if not results:
             return "I couldn't find [[%s]]. I'm really sorry. "%(tag,)
-        if len(results) > 1:
+        if len(results) ==1:
+            return results[0]
+        if len(results) > 10:
+            return "I found a shitload of matches for [[%s]]!!! Here's the first %d.\n\n * %s"%(tag, 
+                  RESULTS_LIMIT, 
+                  '\n\n * '.join(results[:RESULTS_LIMIT]))
+        else:
             return "I found several matches for [[%s]]!\n\n * %s"%(tag,
                   '\n\n * '.join(results))
-        else:
-            return results[0]
    
 
     def parseText(self, text):
