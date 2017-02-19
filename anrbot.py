@@ -12,14 +12,16 @@ import time
 NRDB_SYNCH_INTERVAL=60*60*24
 NRDB_ALL_CARDS="https://netrunnerdb.com/api/2.0/public/cards"
 RESULTS_LIMIT=10
+ABBREVIATIONS_WIKI='abbreviations'
+STATUS_WIKI='status'
 
 FOOTER = """
 
 *****
-I am Clanky, the ANRBot. 
+Beep Boop. I am Clanky, the ANRBot. 
 
+[ [About me] ](https://www.reddit.com/r/anrbot/wiki)
 [ [Contact] ](https://www.reddit.com/message/compose/?to=just_doug&subject=ANRBot)
-[ [Source] ](https://github.com/carlsondc/anrbot)
 """
 
 class ANRBot(object):
@@ -29,13 +31,15 @@ class ANRBot(object):
     def __init__(self, 
                  cardsFile='cards.json', 
                  prawConfig='anrbot',
-                 sub='anrbot'):
-        self.cards = self.loadCards('cards.json')
+                 sub='anrbot',
+                 wikiSub='anrbot'):
         self.r=praw.Reddit(prawConfig)
         self.s=self.r.subreddit(sub)
         self.regex = re.compile(r'\[\[(.*?)\]\]')
         self.botName = self.r.user.me().name
-
+        self.wiki = self.r.subreddit(wikiSub).wiki
+        self.abbreviations = self.loadAbbreviations(ABBREVIATIONS_WIKI)
+        self.cards = self.loadCards('cards.json')
 
     def rateLimitedReply(self, replyFunc, *args, **kwargs):
         """Repeatedly attempt calls to Comment.reply or
@@ -55,7 +59,17 @@ class ANRBot(object):
     def iterTags(self, text):
         for tag in self.regex.finditer(text):
             yield tag.group(1)
+    
+    def loadAbbreviations(self, wikiPage=ABBREVIATIONS_WIKI):
+        rv={}
+        for tag in self.iterTags(self.wiki[wikiPage].content_md):
+            fields = tag.split('=')
+            if len(fields) == 2:
+                rv[self.normalizeTitle(fields[0])] = self.normalizeTitle(fields[1])
+        return rv
 
+    def postStatus(self, text, wikiPage=STATUS_WIKI):
+        self.wiki[wikiPage].edit(text)
 
     def normalizeTitle(self, title):
         """Convert a string into the lower-case version of its 
@@ -92,6 +106,8 @@ class ANRBot(object):
         """Generator yielding all cards with a normalized title
            containing the search term. 
         """
+        if search in self.abbreviations:
+            search = self.abbreviations[search]
         for card in cards:
             if search in card['title_norm']:
                 yield card
@@ -233,6 +249,7 @@ if __name__ == '__main__':
     print "STARTING %s %f"%(subreddit, time.time())
     lastPost = max(lastPost, bot.parsePosts(lastPost))
     lastComment = max(lastComment, bot.parseComments(lastComment))
+    bot.postStatus("**Beep Boop** \r\n\r\nThe last time I ran was %s."%(time.asctime()))
     
     writeLast('lastPost', lastPost)
     writeLast('lastComment', lastComment)
