@@ -39,7 +39,7 @@ class ANRBot(object):
         self.botName = self.r.user.me().name
         self.wiki = self.r.subreddit(wikiSub).wiki
         self.abbreviations = self.loadAbbreviations(ABBREVIATIONS_WIKI)
-        self.cards = self.loadCards('cards.json')
+        (self.cards, self.cardDict) = self.loadCards('cards.json')
 
     def rateLimitedReply(self, replyFunc, *args, **kwargs):
         """Repeatedly attempt calls to Comment.reply or
@@ -99,7 +99,8 @@ class ANRBot(object):
             cards = json.load(f)['data']
             for card in cards:
                 card['title_norm'] = self.normalizeTitle(card['title'])
-            return cards
+            cardDict = {card['title_norm']:card for card in cards}
+            return (cards, cardDict)
 
 
     def cardMatches(self, search, cards):
@@ -108,9 +109,12 @@ class ANRBot(object):
         """
         if search in self.abbreviations:
             search = self.abbreviations[search]
-        for card in cards:
-            if search in card['title_norm']:
-                yield card
+        if search in self.cardDict:
+            yield self.cardDict[search]
+        else:
+            for card in cards:
+                if search in card['title_norm']:
+                    yield card
 
 
     def cardToMarkdown(self, card):
