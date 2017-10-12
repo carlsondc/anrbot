@@ -112,9 +112,22 @@ class ANRBot(object):
         if search in self.cardDict:
             yield self.cardDict[search]
         else:
-            for card in cards:
-                if search in card['title_norm']:
-                    yield card
+            #This is an ugly way to deal with reprints
+            # 
+            # When you iterate through this, you get cards sorted
+            # - in reverse alphabetical order
+            # - then by most-recently released first
+            matches = reversed(sorted( (card['title'], 
+                                        int(card['code'][0:2]), 
+                                        card) 
+                                       for card in cards 
+                                       if search in card['title_norm']))
+            last=''
+            for (_, _, card) in matches:
+                if last == card['title']:
+                    continue
+                last = card['title']
+                yield card
 
 
     def cardToMarkdown(self, card):
