@@ -96,9 +96,13 @@ class ANRBot(object):
             uo.retrieve(NRDB_ALL_CARDS,
                 fn)
         with open(fn, 'r') as f:
-            cards = json.load(f)['data']
+            nrdbData = json.load(f)
+            imageUrlTemplate = nrdbData['imageUrlTemplate']
+            cards = nrdbData['data']
             for card in cards:
                 card['title_norm'] = self.normalizeTitle(card['title'])
+                card['image_url'] = card.get('image_url', 
+                    imageUrlTemplate.replace('{code}', card['code']))
             cardDict = {card['title_norm']:card for card in cards}
             return (cards, cardDict)
 
@@ -134,9 +138,8 @@ class ANRBot(object):
         """Convert a single card dict into a string containing its
            name and a link to the relevant page in NRDB.
         """
-        (title, code) = (card['title'], card['code'])
-        return '[%s](https://netrunnerdb.com/card_image/%s.png) - [NetrunnerDB](https://netrunnerdb.com/en/card/%s)'%(title, code, code)
-
+        (title, imageUrl, code) = (card['title'], card['image_url'], card['code'])
+        return '[%s](%s) - [NetrunnerDB](https://netrunnerdb.com/en/card/%s)'%(title, imageUrl, code)
 
     def tagToMarkdown(self, tag, cards):
         """Convert a single tag from a comment/post into a string
