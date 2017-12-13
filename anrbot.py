@@ -101,7 +101,8 @@ class ANRBot(object):
             cards = nrdbData['data']
             for card in cards:
                 card['title_norm'] = self.normalizeTitle(card['title'])
-                card['image_url'] = card['image_url'] or imageUrlTemplate.replace('{code}', card['code'])
+                card['image_url'] = card.get('image_url', 
+                    imageUrlTemplate.replace('{code}', card['code']))
             cardDict = {card['title_norm']:card for card in cards}
             return (cards, cardDict)
 
