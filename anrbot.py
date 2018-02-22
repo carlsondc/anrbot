@@ -8,7 +8,7 @@ from unidecode import unidecode
 import urllib
 import os
 import time
-from difflib import get_close_match
+from difflib import get_close_matches
 
 NRDB_SYNCH_INTERVAL=60*60*24
 NRDB_ALL_CARDS="https://netrunnerdb.com/api/2.0/public/cards"
@@ -158,22 +158,24 @@ class ANRBot(object):
             # note that the default cutoff for get_close_matches is 0.6
             # documentation for get_close_matches can be found here:
             # https://docs.python.org/2/library/difflib.html#difflib.get_close_matches
-            suggestionCutoff = 0.7
+            suggestionCutoff = 0.6
             suggestionLimit = 3
-            suggestions = get_close_matches(self.normalizeTitle(tag),
-                                            cards.keys(),
-                                            suggestionLimit,
-                                            suggestionCutoff)
+            suggestion_strings = get_close_matches(self.normalizeTitle(tag),
+                                                   set([card['title'] for card in cards]),
+                                                   suggestionLimit,
+                                                   suggestionCutoff)
             apologyString = "I couldn't find [[%s]]. I'm really sorry. "%(tag,)
-            if len(suggestions) == 0:
+            if len(suggestion_strings) == 0:
                 return apologyString
             else:
-                retString = apologyString + "Perhaps you meant:\n\n"
-                # note we can iterate through the suggestions with confidence
-                # since they all originated from the cards' keys.
-                suggestionResults = [self.cardToMarkdown(cards[suggestion])
-                                     for suggestion
-                                     in suggestions]
+                retString = apologyString + "Perhaps you meant:\n\n * "
+                suggestionResults = []
+                for suggestion_str in suggestion_strings:
+                    matches = self.cardMatches(self.normalizeTitle(suggestion_str),
+                                           cards) 
+                    suggestionResults += [self.cardToMarkdown(card)
+                                          for card
+                                          in matches]
                 return retString + '\n\n * '.join(suggestionResults)
 
         if len(results) == 1:
